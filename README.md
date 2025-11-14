@@ -27,12 +27,20 @@ git clone <repository-url> ~/IRC26
 cd ~/IRC26
 ```
 
-2. Install dependencies:
+1. Install system/ROS dependencies:
+
 ```bash
 rosdep install --from-paths src --ignore-src -r -y
 ```
 
-3. Build the workspace:
+1. (Optional) Install Python dependencies used by the packages and tests:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+1. Build the workspace:
+
 ```bash
 colcon build
 ```
@@ -66,6 +74,42 @@ After sourcing the workspace, you can run ROS 2 nodes from the packages:
 ros2 run <package_name> <node_name>
 ```
 
+To run the wheel interface for the `motor_ctrl` package (wheel control node), use:
+
+```bash
+ros2 run motor_ctrl interface
+```
+
+If you see a "Permission denied" error when opening a serial device (for example `/dev/ttyUSB0` or `/dev/ttyACM0`), prefer a persistent and secure fix using a udev rule and the dialout group instead of `chmod 666`.
+
+Quick temporary fix (not recommended for long-term use):
+
+```bash
+sudo chmod 666 "/dev/ttyUSB0"
+# or
+sudo chmod 666 "/dev/ttyACM0"
+```
+
+Recommended persistent fix (udev + dialout):
+
+1. Create a file `/etc/udev/rules.d/99-irc26-serial.rules` with the contents shown in `udev/99-irc26-serial.rules` in this repository.
+1. Reload udev rules and trigger them:
+
+```bash
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+```
+
+1. Add your user to the `dialout` group so you can access serial devices without sudo:
+
+```bash
+sudo usermod -a -G dialout $USER
+# then either log out and log back in, or run
+newgrp dialout
+```
+
+This gives controlled access to serial devices and avoids world-writable device files.
+
 ### Testing
 
 Run tests for all packages:
@@ -98,7 +142,7 @@ IRC26/
 
 All packages are ament_python packages with the following structure:
 - Version: 0.0.0
-- Maintainer: sandy (sandytheadventurer@gmail.com)
+- Maintainer: sandy <sandytheadventurer@gmail.com>
 - License: TODO: License declaration
 
 ### Development
@@ -108,6 +152,7 @@ Each package includes test dependencies:
 - ament_flake8
 - ament_pep257
 - python3-pytest
+
 
 ## Building Individual Packages
 
@@ -134,4 +179,4 @@ TODO: License declaration
 ## Contact
 
 Maintainer: sandy  
-Email: sandytheadventurer@gmail.com
+Email: [sandytheadventurer@gmail.com](mailto:sandytheadventurer@gmail.com)
