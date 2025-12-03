@@ -24,6 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'gps_interface = sensors.gps:main',
         ],
     },
 )
+
