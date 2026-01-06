@@ -35,12 +35,20 @@ ros2 run topic_tools relay /rtabmap/map /map
 ros2 run topic_tools relay /rtabmap/odom /odom
 ```
 
-4) Launch Nav2
+4) Publish camera_link -> base_link tf:
+```bash
+ros2 run tf2_ros static_transform_publisher \                       
+  0.15 0.0 0.25 \                            
+  0 0 0 \                                                       
+  base_link camera_link
+```
+
+5) Launch Nav2
 ```bash
 ros2 launch nav2_bringup navigation_launch.py use_sim_time:=false
 ```
 
-5) Send a quick test goal from the command line
+6) Send a quick test goal from the command line
 This verifies Nav2’s action server is working before using RViz:
 ```bash
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose "{ \
