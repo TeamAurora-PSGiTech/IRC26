@@ -15,7 +15,7 @@ class GPSInterface(Node):
             self.get_logger().error(f"Unable to open {self.serial_port}: {exc}")
         self.publisher = self.create_publisher(NavSatFix, 'gps', 10)
         self.coord = [float('nan'), float('nan'), 0.0]
-        self.timer = self.create_timer(0.5, self.gps_callback)
+        self.timer = self.create_timer(0.1, self.gps_callback)
 
     def gps_callback(self):
         if self.serial is None or not self.serial.is_open:

@@ -11,7 +11,10 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'pyserial',
+    ],
     zip_safe=True,
     maintainer='sandy',
     maintainer_email='sandytheadventurer@gmail.com',
@@ -25,6 +28,7 @@ setup(
     entry_points={
         'console_scripts': [
             'interface = motor_ctrl.interface:main',
+            'const = motor_ctrl.const:main',
         ],
     },
 )
