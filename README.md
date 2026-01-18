@@ -80,6 +80,19 @@ To run the wheel interface for the `motor_ctrl` package (wheel control node), us
 ros2 run motor_ctrl interface
 ```
 
+### Nav2 / RTAB-Map quick launch (multi-terminal)
+
+Use the helper script to start the Nav2 stack in separate terminals:
+
+```bash
+chmod +x scripts/run_nav2_stack.sh
+./scripts/run_nav2_stack.sh
+```
+
+Notes:
+- The script opens multiple GUI terminals. On Jetson without an active display session, it will exit with an error.
+- You can tweak behavior via environment variables: `USE_SIM_TIME`, `INTERFACE_MODE` (`auto` or `const`), `SEND_TEST_GOAL`, `GOAL_X`, `GOAL_Y`, `SETUP_SCRIPT`.
+
 
 If you see a "Permission denied" error when opening a serial device (for example `/dev/ttyUSB0` or `/dev/ttyACM0`), prefer a persistent and secure fix using a udev rule and the dialout group instead of `chmod 666`.
 

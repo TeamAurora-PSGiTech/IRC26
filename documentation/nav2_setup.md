@@ -5,15 +5,27 @@ Prerequisites
 - **ROS 2 running** and your workspace sourced (e.g. `source install/setup.bash`).
 - Camera drivers (RealSense), `rtabmap` and `nav2` packages installed and on your ROS_DOMAIN.
 - Recommended: run everything with the same `use_sim_time` setting (typically `false` for live sensors).
+- If you use [scripts/run_nav2_stack.sh](scripts/run_nav2_stack.sh), it requires a GUI terminal. On Jetson without a display session, the script will exit with an error.
 
 1) Start the RealSense camera
 ```bash
 ros2 launch realsense2_camera rs_launch.py \
   align_depth.enable:=true \
-  pointcloud.enable:=true
+  pointcloud.enable:=true \
+  enable_gyro:=true \
+  enable_accel:=true \
+  unite_imu_method:=1
 ```
 
-2) Start RTAB-Map (visual SLAM)
+2) Publish camera_link -> base_link tf:
+```bash
+ros2 run tf2_ros static_transform_publisher \
+  0.15 0.0 0.25 \
+  0 0 0 \
+  base_link camera_link
+```
+
+3) Start RTAB-Map (visual SLAM)
 ```bash
 ros2 launch rtabmap_launch rtabmap.launch.py \
   rgb_topic:=/camera/camera/color/image_raw \
@@ -28,27 +40,29 @@ ros2 launch rtabmap_launch rtabmap.launch.py \
   delete_db_on_start:=true
 ```
 
-3) (Optional) Republish topics from RTAB-Map to standard names
+4) (Optional) Republish topics from RTAB-Map to standard names
 If your other stacks expect topics named `/map` and `/odom`, relay them:
 ```bash
 ros2 run topic_tools relay /rtabmap/map /map
 ros2 run topic_tools relay /rtabmap/odom /odom
 ```
 
-4) Publish camera_link -> base_link tf:
+5) Setup Interface
+For auto velocity
 ```bash
-ros2 run tf2_ros static_transform_publisher \                       
-  0.15 0.0 0.25 \                            
-  0 0 0 \                                                       
-  base_link camera_link
+ros2 run motor_ctrl interface
+```
+For constant velocity
+```bash
+ros2 run motor_ctrl const
 ```
 
-5) Launch Nav2
+6) Launch Nav2
 ```bash
-ros2 launch nav2_bringup navigation_launch.py use_sim_time:=false
+ros2 launch nav2_bringup navigation_launch.py use_sim_time:=false params_file:=$HOME/IRC26/src/config/nav2_params.yaml
 ```
 
-6) Send a quick test goal from the command line
+7) Send a quick test goal from the command line
 This verifies Nav2’s action server is working before using RViz:
 ```bash
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose "{ \
