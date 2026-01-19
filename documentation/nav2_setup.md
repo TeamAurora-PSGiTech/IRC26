@@ -4,6 +4,7 @@
 Prerequisites
 - **ROS 2 running** and your workspace sourced (e.g. `source install/setup.bash`).
 - Camera drivers (RealSense), `rtabmap` and `nav2` packages installed and on your ROS_DOMAIN.
+- `robot_localization` installed (for IMU + wheel odom fusion to `/odometry/filtered`).
 - Recommended: run everything with the same `use_sim_time` setting (typically `false` for live sensors).
 - If you use [scripts/run_nav2_stack.sh](scripts/run_nav2_stack.sh), it requires a GUI terminal. On Jetson without a display session, the script will exit with an error.
 
@@ -41,11 +42,20 @@ ros2 launch rtabmap_launch rtabmap.launch.py \
 ```
 
 4) (Optional) Republish topics from RTAB-Map to standard names
-If your other stacks expect topics named `/map` and `/odom`, relay them:
+If your other stacks expect topics named `/map` and `/odom`, relay them. (Nav2 here is configured to use `/rtabmap/map` directly.)
 ```bash
 ros2 run topic_tools relay /rtabmap/map /map
 ros2 run topic_tools relay /rtabmap/odom /odom
 ```
+
+4.5) (Recommended) Fuse IMU + odom with robot_localization
+Run an EKF to publish `/odometry/filtered` and the `odom -> base_link` transform. Example:
+```bash
+ros2 run robot_localization ekf_node --ros-args --params-file $HOME/IRC26/src/config/ekf.yaml
+```
+This repo’s EKF config expects:
+- IMU on `/imu/data`
+- Odom on `/rtabmap/odom`
 
 5) Setup Interface
 For auto velocity
@@ -61,6 +71,9 @@ ros2 run motor_ctrl const
 ```bash
 ros2 launch nav2_bringup navigation_launch.py use_sim_time:=false params_file:=$HOME/IRC26/src/config/nav2_params.yaml
 ```
+This guide’s Nav2 config expects:
+- `/rtabmap/map` as the map topic
+- `/odometry/filtered` as the odom topic (from robot_localization)
 
 7) Send a quick test goal from the command line
 This verifies Nav2’s action server is working before using RViz:
