@@ -9,8 +9,8 @@ class MotorInterface(Node):
         self.serial = serial.Serial("/dev/ttyUSB0", baudrate=9600, timeout=1)
         self.subscriber = self.create_subscription(Twist, topic='cmd_vel', callback=self.cmd_vel_callback, qos_profile=10)
         self.array = [0.0, 0.0]
-        self.wheel_rad = 0.105
-        self.wheel_sep = 0.95
+        self.wheel_rad = 0.0125
+        self.wheel_sep = 0.600
         self.create_rate(1)
 
     def cmd_vel_callback(self, msg):

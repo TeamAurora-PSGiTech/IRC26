@@ -41,6 +41,25 @@ ros2 launch rtabmap_launch rtabmap.launch.py \
   delete_db_on_start:=true
 ```
 
+To increase RTAB-Map range, pass max depth + grid range parameters:
+```bash
+ros2 launch rtabmap_launch rtabmap.launch.py \
+  rgb_topic:=/camera/camera/color/image_raw \
+  depth_topic:=/camera/camera/aligned_depth_to_color/image_raw \
+  camera_info_topic:=/camera/camera/color/camera_info \
+  frame_id:=base_link \
+  odom_frame_id:=odom \
+  publish_tf:=true \
+  visual_odometry:=true \
+  approx_sync:=true \
+  rtabmap_viz:=false \
+  delete_db_on_start:=true \
+  rtabmap_args:="--RGBD/MaxDepth 8.0 --Grid/RangeMax 8.0"
+```
+Notes:
+- Increase/decrease the meters as needed for your environment.
+- Make sure the RealSense depth stream isn’t capped to a shorter range.
+
 4) (Optional) Republish topics from RTAB-Map to standard names
 If your other stacks expect topics named `/map` and `/odom`, relay them. (Nav2 here is configured to use `/rtabmap/map` directly.)
 ```bash
