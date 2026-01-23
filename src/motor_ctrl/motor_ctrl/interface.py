@@ -21,7 +21,7 @@ class MotorInterface(Node):
         self.w_l = (linear / self.wheel_rad) - ((angular * self.wheel_sep) / (2.0 * self.wheel_rad))
         self.w_l = max(-255, self.w_l) if self.w_l < 0 else min(255, self.w_l)
         self.get_logger().info(f"Right Wheel Velocity: {self.w_r}, Left Wheel Velocity: {self.w_l}")
-        data = f"{int(self.w_l)},{int(-self.w_r)}\n"
+        data = f"{int(self.w_r)},{int(-self.w_l)}\n"
         self.serial.write(data.encode())
 
 def main(args = None):

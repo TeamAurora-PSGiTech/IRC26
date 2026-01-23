@@ -80,6 +80,20 @@ To run the wheel interface for the `motor_ctrl` package (wheel control node), us
 ros2 run motor_ctrl interface
 ```
 
+### Useful Aliases
+
+Add these to your shell rc file (e.g., `~/.bashrc` or `~/.zshrc`) for quick access:
+
+```bash
+alias tmux8="$HOME/tmux-start.sh"
+alias motor="ros2 run motor_ctrl interface"
+alias nav="ros2 launch nav2_bringup navigation_launch.py use_sim_time:=false params_file:=$HOME/IRC26/src/config/nav2_params.yaml"
+alias ekf="ros2 run robot_localization ekf_node --ros-args --params-file $HOME/IRC26/src/config/ekf.yaml"
+alias rtab="ros2 launch rtabmap_launch rtabmap.launch.py rgb_topic:=/camera/camera/color/image_raw depth_topic:=/camera/camera/aligned_depth_to_color/image_raw camera_info_topic:=/camera/camera/color/camera_info frame_id:=base_link odom_frame_id:=odom publish_tf:=true visual_odometry:=true approx_sync:=true rtabmap_viz:=false delete_db_on_start:=true"
+alias tf2="ros2 run tf2_ros static_transform_publisher 0.15 0.0 0.25 0 0 0 base_link camera_link"
+alias rscam="ros2 launch realsense2_camera rs_launch.py align_depth.enable:=true pointcloud.enable:=true enable_gyro:=true enable_accel:=true unite_imu_method:=1"
+```
+
 ### Nav2 / RTAB-Map quick launch (multi-terminal)
 
 Use the helper script to start the Nav2 stack in separate terminals:
@@ -186,6 +200,8 @@ Each package includes test dependencies:
 - ament_flake8
 - ament_pep257
 - python3-pytest
+
+
 
 
 ## Building Individual Packages
