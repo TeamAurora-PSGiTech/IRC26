@@ -29,6 +29,7 @@ setup(
         'console_scripts': [
             'interface = motor_ctrl.interface:main',
             'const = motor_ctrl.const:main',
+            'smoothed = motor_ctrl.smoothed:main',
         ],
     },
 )
