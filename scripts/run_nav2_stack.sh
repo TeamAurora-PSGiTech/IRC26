@@ -43,6 +43,8 @@ COMMON_PREFIX="source \"$SETUP_SCRIPT\""
 REALSENSE_CMD="$COMMON_PREFIX; \
 ros2 launch realsense2_camera rs_launch.py \
   align_depth.enable:=true \
+  depth_module.enable:=true \
+  depth_module.profile:=640x480x30 \
   pointcloud.enable:=true \
   enable_gyro:=true \
   enable_accel:=true \
