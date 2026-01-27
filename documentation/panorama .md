@@ -1,131 +1,103 @@
-1. Introduction
+# DOCUMENTATION
 
-This project implements a panorama-based site documentation system for IRC26 using ROS 2 and an Intel RealSense depth camera.
-The objective is to capture wide-area visual context of exploration sites while recording essential metadata such as orientation, GPS location, elevation, accuracy, and depth context.
+## System Requirements
 
-The system is designed to be honest, robust, and competition-safe, prioritizing correct engineering practice over unsupported assumptions.
+* Ubuntu 20.04 or Ubuntu 22.04
+* ROS 2 Humble
+* Intel RealSense depth camera
+* realsense2_camera ROS 2 package
+* OpenCV (python3-opencv)
+* cv_bridge
 
-2. System Objectives
+## Workspace Structure
 
-The system is developed to:
+The ROS 2 workspace must follow the structure below:
 
-Capture wide-angle panorama images with a minimum 1:3 height-to-width ratio
+```
+ros2_ws/
+├── src/
+│   └── panorama_pkg/
+│       ├── panorama_pkg/
+│       │   └── panorama_node.py
+│       ├── setup.py
+│       └── package.xml
+```
 
-Indicate cardinal directions based on rover orientation
+## Number of Terminals Required
 
-Record GPS coordinates, elevation, and accuracy
+Three terminals are recommended for normal operation:
 
-Provide depth context of the environment
+* **Terminal 1:** Camera driver (RealSense)
+* **Terminal 2:** Panorama stitching node
+* **Terminal 3:** Subscriber and visualization (base station)
 
-Save all data in a structured, reusable format
+## Terminal Commands
 
-Support both single-image and panorama capture modes
+### Terminal 1 – Start the RealSense camera driver:
 
-3. Hardware and Sensors Used
-Sensors
+```bash
+ros2 launch realsense2_camera rs_launch.py \
+  enable_depth:=true \
+  enable_imu:=true \
+  align_depth:=true
+```
 
-Intel RealSense RGB Camera
+### Terminal 2 – Build the workspace and run the panorama node:
 
-Intel RealSense Depth Camera
+```bash
+cd ~/ros2_ws
+colcon build
+source install/setup.bash
+ros2 run panorama_pkg panorama_node
+```
 
-Intel RealSense IMU
+### Terminal 3 – Subscribe to the stitched panorama image:
 
-External GPS Module
+```bash
+ros2 run rqt_image_view rqt_image_view
+```
 
-Processing Platform
+Select the topic:
 
-ROS 2 (Humble)
+```
+/panorama/image
+```
 
-Python-based ROS 2 node
+## How to Use the System
 
-4. ROS Topics and Data Sources
-Data Type	ROS Topic
-RGB Image	/camera/camera/color/image_raw
-Depth Image	/camera/camera/depth/image_rect_raw
-IMU	/imu/data
-GPS Fix	/fix
+1. Focus the live camera window opened by the panorama node.
+2. Rotate the camera or rover approximately **20–30 degrees** between captures.
+3. Press the key **`s`** to capture each frame.
+4. Capture at least **two frames** (recommended: **3–4 frames**).
+5. Press the key **`q`** to stitch the panorama and publish it.
+6. View the stitched panorama in **rqt_image_view** on the base station.
 
-All metadata is synchronized at capture time.
+## Output Files Generated
 
-5. Operating Procedure
-TERMINAL 1 — Launch RealSense Camera
-source /opt/ros/humble/setup.bash
-ros2 launch realsense2_camera rs_launch.py
+All output files are saved in the following directory:
 
+```
+~/panorama_output/
+```
 
-This terminal must remain running throughout the operation.
+The directory contains:
 
-TERMINAL 2 — Run Panorama Node
-source /opt/ros/humble/setup.bash
-cd ~/IRC26/src/panorama
-python3 ros2_panorama.py
+* Individual captured frames (`frame_01.jpg`, `frame_02.jpg`, etc.)
+* Final stitched panorama image (`panorama_final.jpg`)
 
+## Parameters Embedded in the Stitched Panorama
 
-A live camera feed window will appear.
+The stitched panorama image contains the following embedded information:
 
-6. User Controls
-Key	Function
-a	Capture single image and save image + metadata
-s	Capture one panorama frame (press multiple times while rotating rover)
-q	Stitch panorama, save outputs, and exit
-7. Data Output and Metadata
+* Cardinal direction scale (N, E, S, W)
+* Camera yaw orientation
+* GPS latitude and longitude of each capture site
+* Elevation (altitude)
+* GPS accuracy range
+* Depth-based real-world scale (minimum, mean, and maximum depth)
+* Timestamp of panorama creation
+* Stratigraphic layer annotations
 
-Each capture generates:
+## System Overview
 
-Image Files
-
-single_image_X.jpg
-
-panorama.jpg
-
-Metadata Files
-
-single_image_X.json
-
-panorama.json
-
-Metadata includes:
-
-Timestamp
-
-IMU yaw and relative cardinal direction
-
-GPS latitude and longitude
-
-Elevation (meters above sea level)
-
-GPS accuracy (meters)
-
-Depth context:
-
-Minimum distance
-
-Maximum distance
-
-Mean distance
-
-Cardinal directions are relative to rover orientation, not magnetic or true north.
-
-8. Current Status and Limitations
-Implemented
-
-Panorama image stitching
-
-Relative cardinal direction from IMU
-
-GPS coordinates, elevation, and accuracy
-
-Depth context reporting
-
-Image and JSON data logging
-
-Stable ROS 2 integration
-
-Not Yet Implemented
-
-Absolute image scale (meters per pixel)
-
-At this stage, no absolute scale is claimed in the images or metadata.
-Depth information is used only to describe spatial context, not to derive metric measurements.
-
-Scale estimation will be implemented as the final stage, once reference anchoring is introduced and validated.
+This system allows the stitched panorama image to be published as a ROS 2 topic and subscribed to from a remote base station, making it suitable for rover-based exploration and monitoring applications.
