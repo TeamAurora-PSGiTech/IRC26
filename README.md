@@ -222,24 +222,28 @@ How to Navigate to GPS Coordinates
 Prerequisites - Run these in separate terminals:
 Terminal 1: GPS Interface
 
+"""
 cd ~/IRC26
 source install/setup.bash
 ros2 run sensors gps_interface
+"""
 
 this will run the gps node 
-
+"""
 Terminal 2: NavSat Transform (converts GPS to map coordinates)
 
 cd ~/IRC26
 source install/setup.bash
 ros2 launch sensors navsat_transform.launch.py
+"""
 
+"""
 Terminal 3: Nav2 Stack (needs RTAB-Map running)
 
 cd ~/IRC26
 source install/setup.bash
 ros2 launch nav2_bringup navigation_launch.py use_sim_time:=false params_file:=$HOME/IRC26/src/config/nav2_params.yaml
-
+"""
 Send the Rover to GPS Coordinates
 
 cd ~/IRC26
