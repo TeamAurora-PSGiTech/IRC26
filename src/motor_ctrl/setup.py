@@ -30,7 +30,6 @@ setup(
             'interface = motor_ctrl.interface:main',
             'const = motor_ctrl.const:main',
             'smoothed = motor_ctrl.smoothed:main',
-            'cmdvel_to_motor = motor_ctrl.cmdvel_to_motor:main',
         ],
     },
 )
