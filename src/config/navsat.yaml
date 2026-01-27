@@ -9,3 +9,6 @@ navsat_transform:
     publish_filtered_gps: true
     use_odometry_yaw: true
     wait_for_datum: false
+    datum: [-33.916, 18.423, 0.0]  # [latitude, longitude, yaw] - THIS becomes (0,0)
+
+    

@@ -15,6 +15,14 @@ def generate_launch_description():
             default_value=default_params,
             description="Path to navsat_transform params file",
         ),
+        # Static transform from base_link to gps frame
+        # Adjust x, y, z values to match where your GPS is mounted on the robot
+        Node(
+            package="tf2_ros",
+            executable="static_transform_publisher",
+            name="base_link_to_gps",
+            arguments=["0", "0", "0", "0", "0", "0", "base_link", "gps"],
+        ),
         Node(
             package="robot_localization",
             executable="navsat_transform_node",
