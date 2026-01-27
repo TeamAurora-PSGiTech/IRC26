@@ -1,106 +1,254 @@
-👉️Landmark Setup — Recording & Visualizing Map Landmarks
+📍 Landmark Setup — Recording & Visualizing Map Landmarks (IRC26)
 
-💥️This document explains how to record landmarks on the SLAM map and persistently store them using the IRC26 landmark system.
+This document explains how to record, store, and visualize landmarks on a SLAM-generated map using the IRC26 Landmark System.
 
-💥️A landmark represents a manually marked point of interest on the map, recorded at the rover’s current position.
+A landmark is a manually operator-defined point of interest, recorded at the rover’s current pose in the map frame, and stored persistently for reuse across system restarts.
 
-👉️Prerequisites
+This system is intentionally simple, deterministic, and competition-safe.
+
+🔧 Prerequisites
 
 Before running the landmark system, ensure:
 
-💥️ROS 2 Humble is installed
+ROS 2 Humble is installed and sourced
 
-💥️The workspace builds without errors
+Workspace ~/IRC26 builds without errors
 
-💥️RTAB-Map and Nav2 are configured correctly
+Intel RealSense camera is connected and detected
 
-💥️The map → odom → base_link TF tree exists
+RTAB-Map is publishing a valid map
 
-👉️Full Run — Landmark System
+Nav2 is running successfully
 
-💥️TERMINAL 1 — Launch the Landmark System
+A valid TF tree exists:
 
-cd ~/nav2_ws
+map → odom → base_link
+
+
+Verify with:
+
+ros2 topic echo /tf
+
+🚀 Full Run — Landmark System (Terminal-wise)
+
+🔹 TERMINAL 1 — Start Intel RealSense Camera
+
 source /opt/ros/humble/setup.bash
-colcon build
-source install/setup.bash
 
-ros2 launch realworld_landmark_launch realworld_landmarks.launch.py
+ros2 launch realsense2_camera rs_launch.py \
+  align_depth.enable:=true \
+  pointcloud.enable:=true
 
 
-👉️This terminal:
+📌 Purpose
 
-💥️Builds the workspace
+Starts RGB + depth streams
 
-💥️Launches the full landmark stack
-
-💥️Initializes map, TF, marker visualization, and RViz
+Provides input for RTAB-Map SLAM
 
 ⚠️ Keep this terminal running.
 
-💥️TERMINAL 2 — Record Landmarks
+🔹 TERMINAL 2 — Start RTAB-Map (Visual SLAM)
 
-Open a new terminal:
+source /opt/ros/humble/setup.bash
 
-cd ~/nav2_ws
+ros2 launch rtabmap_launch rtabmap.launch.py \
+  rgb_topic:=/camera/camera/color/image_raw \
+  depth_topic:=/camera/camera/aligned_depth_to_color/image_raw \
+  camera_info_topic:=/camera/camera/color/camera_info \
+  frame_id:=base_link \
+  odom_frame_id:=odom \
+  publish_tf:=true \
+  visual_odometry:=true \
+  approx_sync:=true \
+  rtabmap_viz:=false \
+  delete_db_on_start:=true
+
+
+📌 Purpose
+
+Generates SLAM map
+
+Publishes /map, /odom, and TF transforms
+
+⚠️ Keep this terminal running.
+
+🔹 TERMINAL 3 — Publish Static TF (Camera → Base Link)
+
+source /opt/ros/humble/setup.bash
+
+ros2 run tf2_ros static_transform_publisher \
+  0 0 0 \
+  0 0 0 \
+  base_link camera_link
+
+
+📌 Purpose
+
+Fixes camera frame alignment
+
+Required for correct SLAM and localization
+
+🔹 TERMINAL 4 — Relay Map Topic
+
+source /opt/ros/humble/setup.bash
+
+ros2 run topic_tools relay /rtabmap/map /map
+
+
+📌 Purpose
+
+Makes RTAB-Map map available as /map
+
+Required by Nav2 and RViz
+
+🔹 TERMINAL 5 — Relay Odometry Topic
+
+source /opt/ros/humble/setup.bash
+
+ros2 run topic_tools relay /rtabmap/odom /odom
+
+
+📌 Purpose
+
+Standardizes odometry topic for Nav2
+
+🔹 TERMINAL 6 — Start Nav2
+
+source /opt/ros/humble/setup.bash
+
+ros2 launch nav2_bringup navigation_launch.py \
+  use_sim_time:=false
+
+
+📌 Purpose
+
+Enables localization and navigation
+
+Provides stable map → odom → base_link tracking
+
+⏱️ Wait ~10 seconds for full initialization.
+
+🔹 TERMINAL 7 — Landmark Recorder (Keyboard Input)
+
+cd ~/IRC26
 source /opt/ros/humble/setup.bash
 colcon build
 source install/setup.bash
 
-ros2 run landmark_recorder record_landmark
+ros2 run landmark landmark_recorder
 
 
-💥️You should see:
+You should see:
 
-Press 'l' to save landmark
+Press keys to save landmarks:
 
-👉️User Control
+🎮 Keyboard Controls
+Key	Landmark Color
+l	Red
+a	Light Blue
+s	Orange
+d	Brown
+f	Pink
+g	Yellow
+h	Purple
+j	Dark Blue
+k	Dark Green
+;	Cyan
 
-💥️l - Save a landmark at the current rover position
+📌 What happens on key press
 
-👉️Each key press:
+Current robot pose is read from the map frame
 
-💥️Reads the current robot position from the map frame
+A new landmark is appended to a YAML file
 
-💥️Appends a new landmark to the YAML file
+Marker is published immediately for RViz
 
-💥️Publishes a marker for visualization
+Landmark ID increments automatically
 
-👉️Checking Recorded Landmarks
+🔹 TERMINAL 8 — Marker Publisher (Persistent Visualization)
 
-💥️All landmarks are stored persistently in:
+cd ~/IRC26
+source /opt/ros/humble/setup.bash
+colcon build
+source install/setup.bash
 
-~/ros2_ws/src/marker_demo/config/landmarks.yaml
-
-
-💥️To view the saved landmarks:
-
-cat ~/ros2_ws/src/marker_demo/config/landmarks.yaml
+ros2 run landmark marker_publisher
 
 
-💥️Coordinates are in meters
+📌 Purpose
 
-💥️Frame reference: map
+Reloads landmarks from disk
 
-💥️Landmarks persist across restarts
+Republishes markers periodically
 
-👉️Notes
+Ensures markers persist after restart
 
-💥️Landmarks are manual and operator-defined
+🔹 TERMINAL 9 — RViz
 
-💥️No orientation or naming is stored
+source /opt/ros/humble/setup.bash
+rviz2
 
-💥️Landmarks are reloaded automatically when the system restarts
+RViz Configuration Checklist
 
-💥️This system is designed for simplicity and reliability
+Fixed Frame: map
 
-👉️Summary
+Add Displays:
 
-Using just two terminals, this system allows operators to:
+Map
 
-💥️Mark important locations on the map
+TF
 
-💥️Store them persistently
+Marker (/landmark_markers)
 
-💥️Visualize them automatically on restart
+RobotModel (optional)
 
+📂 Landmark Storage
+
+All landmarks are stored persistently at:
+
+~/IRC26/src/landmark/config/landmarks.yaml
+
+
+To view:
+
+cat ~/IRC26/src/landmark/config/landmarks.yaml
+
+Stored Data Includes
+
+id (unique, auto-incremented)
+
+x, y coordinates (meters)
+
+color_name
+
+RGB color values
+
+📌 Frame reference: map
+📌 Persistence: survives restart
+
+📝 Design Notes (Honest Engineering)
+
+Landmarks are manual, operator-defined
+
+No orientation or semantic labels are stored
+
+No automatic feature extraction
+
+Color is used only for human interpretation
+
+System prioritizes reliability over automation
+
+✅ Summary
+
+Using this setup, operators can:
+
+Manually mark important locations on a SLAM map
+
+Assign visual categories using color
+
+Persist landmarks across reboots
+
+Instantly visualize all landmarks in RViz
+
+This landmark system is simple, robust, and competition-appropriate, with no hidden assumptions.
