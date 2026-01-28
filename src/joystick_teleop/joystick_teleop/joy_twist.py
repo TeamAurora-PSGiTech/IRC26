@@ -26,9 +26,9 @@ class JoyTwist(Node):
 
         # ---- LIMITS ----
         self.min_linear = 0.05
-        self.max_linear = 5.0
+        self.max_linear = 2.2
         self.min_angular = 0.1
-        self.max_angular = 5.0
+        self.max_angular = 2.2
 
         # ---- DEBOUNCE STATE (IMPORTANT) ----
         self.last_linear_dpad = 0.0
