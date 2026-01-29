@@ -1,5 +1,6 @@
 from setuptools import find_packages, setup
-
+import os
+from glob import glob
 package_name = 'arm_ctrl'
 
 setup(
@@ -10,11 +11,11 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/msgs', ['msgs/Arm.msg']),
+        (os.path.join('share', package_name, 'msg'), glob('msg/*.msg')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='sandy',
+    maintainer='jetson',
     maintainer_email='sandytheadventurer@gmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',

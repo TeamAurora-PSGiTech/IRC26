@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 import serial
 
-from arm_ctrl.msg import Arm
+from arm_ctrl_msgs.msg import Arm
 
 
 class ArmInterface(Node):
