@@ -1,52 +1,59 @@
-import rclpy
-from rclpy.node import Node
 import serial
 
-from arm_ctrl_msgs.msg import Arm
+PORT = "/dev/ttyACM1"
+BAUD = 9600
+N = 9
 
+ser = serial.Serial(PORT, BAUD, timeout=1)
 
-class ArmInterface(Node):
-    def __init__(self):
-        super().__init__("arm_interface")
-        self.serial = serial.Serial("/dev/ttyACM1", baudrate=9600, timeout=1)
-        self.subscriber = self.create_subscription(
-            Arm,
-            topic="arm_cmd",
-            callback=self.arm_cmd_callback,
-            qos_profile=10,
-        )
-        self.create_rate(2)
+print("Teleop started")
+print("m <idx 0-4> <val>     : single motor")
+print("s <d1> <d2> <a1> <a2>: servo block")
+print("q                     : quit")
 
-    def arm_cmd_callback(self, msg: Arm):
-        # Arduino expects single angle values (0-180)
-        servo1_angle = int(msg.servo1_angle[0]) if msg.servo1_angle else 5
-        servo2_angle = int(msg.servo2_angle[0]) if msg.servo2_angle else 5
+def send(u):
+    packet = ",".join(str(x) for x in u) + "\n"
+    ser.write(packet.encode())
+    print("Sent:", u)
 
-        # Format: base,link1,link2,link3,tool,servo1_dir,servo2_dir,servo1_angle,servo2_angle
-        data = (
-            f"{int(msg.base)},"
-            f"{int(msg.link1)},{int(msg.link2)},{int(msg.link3)},"
-            f"{int(msg.tool)},"
-            f"{int(msg.servo1_dir)},{int(msg.servo2_dir)},"
-            f"{servo1_angle},{servo2_angle}\n"
-        )
+while True:
+    try:
+        line = input("> ").strip().lower()
+        if line == "q":
+            break
 
-        self.get_logger().info(
-            f"Arm cmd -> base={msg.base} link1={msg.link1} link2={msg.link2} link3={msg.link3} "
-            f"tool={msg.tool} servo1_dir={msg.servo1_dir} servo2_dir={msg.servo2_dir} "
-            f"servo1_angle={servo1_angle} servo2_angle={servo2_angle}"
-        )
+        tokens = line.split()
 
-        self.serial.write(data.encode())
+        u = [0] * N
 
+        if tokens[0] == "m":
+            idx = int(tokens[1])
+            val = int(tokens[2])
 
-def main(args=None):
-    rclpy.init(args=args)
-    interface = ArmInterface()
-    rclpy.spin(interface)
-    interface.destroy_node()
-    rclpy.shutdown()
+            if not (0 <= idx <= 4):
+                print("Motor index must be 0–4")
+                continue
 
+            u[idx] = val
 
-if __name__ == "__main__":
-    main()
+        elif tokens[0] == "s":
+            if len(tokens) != 5:
+                print("Usage: s d1 d2 a1 a2")
+                continue
+
+            u[5] = int(tokens[1])
+            u[6] = int(tokens[2])
+            u[7] = int(tokens[3])
+            u[8] = int(tokens[4])
+
+        else:
+            print("Unknown command")
+            continue
+
+        send(u)
+
+    except Exception as e:
+        print("Error:", e)
+
+ser.close()
+print("Teleop stopped")
