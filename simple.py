@@ -1,59 +1,144 @@
 import serial
 
-PORT = "/dev/ttyACM1"
+# ================= SERIAL CONFIG =================
+PORT = "/dev/ttyACM0"   # change to /dev/ttyUSB0 if needed
 BAUD = 9600
-N = 9
 
+# ================= INDEX MAP =====================
+BASE = 0
+ACT1 = 1
+ACT2 = 2
+ACT3 = 3
+STEP = 4
+SLD  = 5
+SRD  = 6
+SLA  = 7
+SRA  = 8
+
+# ================= CONSTANTS =====================
+FWD  = 1
+REV  = -1
+STOP = 0
+
+SAFE_STATE = [0, 0, 0, 0, 0, 1, 1, 90, 90]
+
+# ================= SERIAL OPEN ===================
 ser = serial.Serial(PORT, BAUD, timeout=1)
 
-print("Teleop started")
-print("m <idx 0-4> <val>     : single motor")
-print("s <d1> <d2> <a1> <a2>: servo block")
-print("q                     : quit")
+# Persistent robot state
+u = SAFE_STATE.copy()
 
-def send(u):
-    packet = ",".join(str(x) for x in u) + "\n"
-    ser.write(packet.encode())
-    print("Sent:", u)
+# ================= INSTRUCTIONS ==================
+print("""
+============================================================
+ARM TELEOP CONTROLLER — FULL SAFETY MODE
+============================================================
 
-while True:
-    try:
+MOTOR CONTROLS (press key + Enter)
+---------------------------------
+Base Motor        : w (forward)   s (reverse)   x (stop)
+Actuator 1        : e (forward)   d (reverse)   c (stop)
+Actuator 2        : r (forward)   f (reverse)   v (stop)
+Actuator 3        : t (forward)   g (reverse)   b (stop)
+Stepper Motor     : y (forward)   h (reverse)   n (stop)
+
+SERVO CONTROL
+-------------
+servo <Ldir> <Rdir> <Lang> <Rang>
+
+Examples:
+  servo 1 1 90 90
+  servo 0 1 120 60
+
+Ldir / Rdir : 1 = normal, 0 = inverted
+Angles      : 0 – 180 degrees
+
+SAFETY / EXIT
+-------------
+q        : 🛑 STOP ALL MOTORS (program continues)
+Ctrl + C : 🛑 STOP + EXIT PROGRAM
+
+NOTE:
+- Motion is CONTINUOUS until stopped
+- Empty Enter does NOTHING
+============================================================
+""")
+
+# ================= SEND ==========================
+def send():
+    pkt = ",".join(map(str, u)) + "\n"
+    ser.write(pkt.encode())
+    print("TX:", u)
+
+def stop_all():
+    u[:] = SAFE_STATE
+    send()
+    print("🛑 ALL MOTORS STOPPED")
+
+# ================= MAIN LOOP =====================
+try:
+    while True:
         line = input("> ").strip().lower()
-        if line == "q":
-            break
 
-        tokens = line.split()
-
-        u = [0] * N
-
-        if tokens[0] == "m":
-            idx = int(tokens[1])
-            val = int(tokens[2])
-
-            if not (0 <= idx <= 4):
-                print("Motor index must be 0–4")
-                continue
-
-            u[idx] = val
-
-        elif tokens[0] == "s":
-            if len(tokens) != 5:
-                print("Usage: s d1 d2 a1 a2")
-                continue
-
-            u[5] = int(tokens[1])
-            u[6] = int(tokens[2])
-            u[7] = int(tokens[3])
-            u[8] = int(tokens[4])
-
-        else:
-            print("Unknown command")
+        # Ignore empty input
+        if line == "":
             continue
 
-        send(u)
+        # -------- STOP ONLY --------
+        if line == "q":
+            stop_all()
+            continue
 
-    except Exception as e:
-        print("Error:", e)
+        # -------- BASE MOTOR --------
+        if line == "w":   u[BASE] = FWD
+        elif line == "s": u[BASE] = REV
+        elif line == "x": u[BASE] = STOP
 
-ser.close()
-print("Teleop stopped")
+        # -------- ACTUATORS --------
+        elif line == "e": u[ACT1] = FWD
+        elif line == "d": u[ACT1] = REV
+        elif line == "c": u[ACT1] = STOP
+
+        elif line == "r": u[ACT2] = FWD
+        elif line == "f": u[ACT2] = REV
+        elif line == "v": u[ACT2] = STOP
+
+        elif line == "t": u[ACT3] = FWD
+        elif line == "g": u[ACT3] = REV
+        elif line == "b": u[ACT3] = STOP
+
+        # -------- STEPPER --------
+        elif line == "y": u[STEP] = FWD
+        elif line == "h": u[STEP] = REV
+        elif line == "n": u[STEP] = STOP
+
+        # -------- SERVOS --------
+        elif line.startswith("servo"):
+            p = line.split()
+            if len(p) != 5:
+                print("Usage: servo Ldir Rdir Lang Rang")
+                continue
+            u[SLD] = int(p[1])
+            u[SRD] = int(p[2])
+            u[SLA] = int(p[3])
+            u[SRA] = int(p[4])
+
+        else:
+            print("Unknown command. See instructions above.")
+            continue
+
+        send()
+
+# ================= SAFETY NET ====================
+except KeyboardInterrupt:
+    print("\nCtrl+C detected — exiting safely")
+
+except Exception as e:
+    print("ERROR:", e)
+
+finally:
+    print("Final safety stop...")
+    stop_all()
+    ser.close()
+    print("CONTROLLER EXITED SAFELY")
+    
