@@ -140,19 +140,26 @@ This gives controlled access to serial devices and avoids world-writable device 
 
 #### Getting Sensor Data
 
-1. Build the `sensors` package (or the whole workspace if you prefer):
+1. Start the IP camera feed:
+
+```bash
+ros2 run ip_feed_pkg ip_feed --ros-args \
+	-p video_source:="rtsp://admin:aurora123@192.168.1.200:554/cam/realmonitor?channel=1&subtype=0"
+```
+
+2. Build the `sensors` package (or the whole workspace if you prefer):
 
 ```bash
 colcon build --packages-select sensors
 ```
 
-2. Source the workspace setup file (see options above for your shell), for example:
+3. Source the workspace setup file (see options above for your shell), for example:
 
 ```bash
 source install/setup.zsh
 ```
 
-3. Launch the GPS interface node:
+4. Launch the GPS interface node:
 
 ```bash
 ros2 run sensors gps_interface
